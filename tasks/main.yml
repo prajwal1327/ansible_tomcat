@@ -1,0 +1,49 @@
+---
+# tasks file for tomcat
+
+- name: Running apt update
+  apt:
+    update_cache: true
+
+- name: Installing Java
+  apt:
+    name: "{{ java_package }}"
+    state: latest
+
+- name: Installing Tomcat Server
+  get_url:
+      url: "{{ tomcat_url }}"
+      dest: "{{ destination_folder }}"
+
+- name: Extracting tar file
+  unarchive:
+     src: "{{ item }}"
+     dest: "{{ destination_folder }}"
+     remote_src: yes
+  with_items: 
+    - "{{ destination_folder_path }}"
+
+- name: Changing the port number using template
+  template:
+    src: template/server.xml.j2
+    dest: "{{ tomcat_server_path }}"
+
+- name: Changing the user settings
+  template:
+    src: template/tomcat-users.xml.j2
+    dest: "{{ tomcat_users_path }}"
+
+- name: changing host manager
+  template:
+    src: template/context.xml.j2
+    dest: "{{ context_xml_path }}"
+
+- name: changing host manager
+  template:
+    src: template/managercontext.xml.j2
+    dest: "{{ context_xml_managerpath }}"
+- name: shutdown tomcat
+  shell: nohup "{{ destination_folder }}"apache-tomcat-10.0.27/bin/shutdown.sh &
+
+- name: starting tomcat
+  shell: nohup "{{ destination_folder }}"apache-tomcat-10.0.27/bin/startup.sh &
